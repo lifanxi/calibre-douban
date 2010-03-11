@@ -228,7 +228,7 @@ class ResultList(list):
         for x in entries:
             try:
                 id_url = entry_id(x)[0].text
-                title = self.get_title(x) + 'db'
+                title = self.get_title(x) 
             except:
                 report(verbose)
             mi = MetaInformation(title, self.get_authors(x))
