@@ -45,7 +45,7 @@ class DoubanBooks(MetadataSource):
 
     def fetch(self):
         try:
-            self.results = search(self.title, self.author, self.publisher,
+            self.results = search(self.title, self.book_author, self.publisher,
                                   self.isbn, max_results=10,
                                   verbose=self.verbose)
         except Exception, e:
