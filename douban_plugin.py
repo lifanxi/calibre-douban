@@ -7,14 +7,13 @@ import sys, textwrap, datetime
 import traceback
 from urllib import urlencode
 from functools import partial
-from dateutil.parser import parse
-from dateutil.tz import tzlocal, tzutc
 from lxml import etree
 
 from calibre import browser, preferred_encoding
 from calibre.ebooks.metadata import MetaInformation
 from calibre.utils.config import OptionParser
 from calibre.ebooks.metadata.fetch import MetadataSource
+from calibre.utils.date import parse_date, utcnow
 
 DOUBAN_API_KEY = None
 NAMESPACES = {
@@ -57,44 +56,6 @@ def report(verbose):
     if verbose:
         import traceback
         traceback.print_exc()
-
-class SafeLocalTimeZone(tzlocal):
-    '''
-    Assume DST was not in effect for historical dates, if DST
-    data for the local timezone is not present in the operating system.
-    '''
-
-    def _isdst(self, dt):
-        try:
-            return tzlocal._isdst(self, dt)
-        except ValueError:
-            pass
-        return False
-
-utc_tz = _utc_tz = tzutc()
-local_tz = _local_tz = SafeLocalTimeZone()
-
-def parse_date(date_string, assume_utc=False, as_utc=True, default=None):
-    '''
-    Parse a date/time string into a timezone aware datetime object. The timezone
-    is always either UTC or the local timezone.
-
-    :param assume_utc: If True and date_string does not specify a timezone,
-    assume UTC, otherwise assume local timezone.
-
-    :param as_utc: If True, return a UTC datetime
-
-    :param default: Missing fields are filled in from default. If None, the
-    current date is used.
-    '''
-    if default is None:
-        func = datetime.utcnow if assume_utc else datetime.now
-        default = func().replace(hour=0, minute=0, second=0, microsecond=0,
-                tzinfo=_utc_tz if assume_utc else _local_tz)
-    dt = parse(date_string, default=default)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=_utc_tz if assume_utc else _local_tz)
-    return dt.astimezone(_utc_tz if as_utc else _local_tz)
 
 class Query(object):
 
@@ -215,7 +176,7 @@ class ResultList(list):
         try:
             d = date(entry)
             if d:
-                default = datetime.datetime.utcnow().replace(day=15)
+                default = utcnow().replace(day=15)
                 d = parse_date(d[0].text, assume_utc=True, default=default)
             else:
                 d = None
