@@ -3,7 +3,7 @@ __license__ = 'GPL 3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>; 2010, Li Fanxi <lifanxi@freemindworld.com>'
 __docformat__ = 'restructuredtext en'
 
-import sys, textwrap, datetime
+import sys, textwrap
 import traceback
 from urllib import urlencode
 from functools import partial
@@ -132,14 +132,6 @@ class ResultList(list):
         except:
             report(verbose)
 
-    def get_language(self, entry, verbose):
-        try:
-            l = language(entry)
-            if l:
-                return l[0].text
-        except:
-            report(verbose)
-
     def get_title(self, entry):
         candidates = [x.text for x in title(entry)]
         return ': '.join(candidates)
@@ -173,7 +165,7 @@ class ResultList(list):
     def get_isbn(self, entry, verbose):
         try:
             isbn13 = isbn(entry)[0].text
-        except Exception, e:
+        except Exception:
             isbn13 = None
         return isbn13
 
@@ -194,7 +186,7 @@ class ResultList(list):
         for x in entries:
             try:
                 id_url = entry_id(x)[0].text
-                title = self.get_title(x) 
+                title = self.get_title(x)
             except:
                 report(verbose)
             mi = MetaInformation(title, self.get_authors(x))
@@ -249,7 +241,7 @@ def option_parser():
     parser.add_option('-a', '--author', help='Book author(s)')
     parser.add_option('-p', '--publisher', help='Book publisher')
     parser.add_option('-i', '--isbn', help='Book ISBN')
-    parser.add_option('-m', '--max-results', default=10, 
+    parser.add_option('-m', '--max-results', default=10,
                       help='Maximum number of results to fetch')
     parser.add_option('-v', '--verbose', default=0, action='count',
                       help='Be more verbose about errors')
