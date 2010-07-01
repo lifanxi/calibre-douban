@@ -34,28 +34,24 @@ date           = XPath("descendant::db:attribute[@name='pubdate']")
 creator        = XPath("descendant::db:attribute[@name='author']")
 tag            = XPath("descendant::db:tag")
 
+CALIBRE_DOUBAN_API_KEY = '0bd1672394eb1ebf2374356abec15c3d'
+
 class DoubanBooks(MetadataSource):
 
     name = 'Douban Books'
     description = _('Downloads metadata from Douban.com')
     supported_platforms = ['windows', 'osx', 'linux'] # Platforms this plugin will run on
     author              = 'Li Fanxi <lifanxi@freemindworld.com>' # The author of this plugin
-    version             = (1, 0, 0)   # The version number of this plugin
+    version             = (1, 0, 1)   # The version number of this plugin
 
     def fetch(self):
         try:
             self.results = search(self.title, self.book_author, self.publisher,
                                   self.isbn, max_results=10,
-                                  verbose=self.verbose, api_key=self.site_customization)
+                                  verbose=self.verbose)
         except Exception, e:
             self.exception = e
             self.tb = traceback.format_exc()
-
-    @property
-    def string_customization_help(self):
-        ans = _('To download book meta data from Douban.com, you\'d better sign up for an %sAPI key%s '
-                'and enter your key below.')
-        return '<p>'+ans%('<a href="http://www.douban.com/service/apikey/apply">', '</a>')
 
 def report(verbose):
     if verbose:
@@ -70,7 +66,7 @@ class Query(object):
     type = "search"
 
     def __init__(self, title=None, author=None, publisher=None, isbn=None,
-                 max_results=20, start_index=1, api_key=None):
+                 max_results=20, start_index=1, api_key=''):
         assert not(title is None and author is None and publisher is None and \
                    isbn is None)
         assert (int(max_results) < 21)
@@ -94,7 +90,7 @@ class Query(object):
 
         if self.type == "isbn":
             self.url = self.ISBN_URL + q
-            if api_key is not None:
+            if api_key != '':
                 self.url = self.url + "?apikey=" + api_key
         else:
             self.url = self.SEARCH_URL+urlencode({
@@ -102,7 +98,7 @@ class Query(object):
                     'max-results':max_results,
                     'start-index':start_index,
                     })
-            if api_key is not None:
+            if api_key != '':
                 self.url = self.url + "&apikey=" + api_key
 
     def __call__(self, browser, verbose):
@@ -182,7 +178,7 @@ class ResultList(list):
             d = None
         return d
 
-    def populate(self, entries, browser, verbose=False, api_key=None):
+    def populate(self, entries, browser, verbose=False, api_key=''):
         for x in entries:
             try:
                 id_url = entry_id(x)[0].text
@@ -191,7 +187,7 @@ class ResultList(list):
                 report(verbose)
             mi = MetaInformation(title, self.get_authors(x))
             try:
-                if api_key is not None:
+                if api_key != '':
                     id_url = id_url + "?apikey=" + api_key
                 raw = browser.open(id_url).read()
                 feed = etree.fromstring(raw)
@@ -211,8 +207,10 @@ def search(title=None, author=None, publisher=None, isbn=None,
            verbose=False, max_results=40, api_key=None):
     br   = browser()
     start, entries = 1, []
-    if api_key is None or api_key == '':
-        api_key=None
+
+    if api_key is None:
+        api_key = CALIBRE_DOUBAN_API_KEY
+
     while start > 0 and len(entries) <= max_results:
         new, start = Query(title=title, author=author, publisher=publisher, 
                        isbn=isbn, max_results=max_results, start_index=start, api_key=api_key)(br, verbose)
